@@ -7,23 +7,22 @@ class RegistroPage extends StatelessWidget {
   final txtSenha = TextEditingController();
 
   RegistroPage({super.key});
-
   void registrar(BuildContext context) async {
     if (txtNome.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor, insira um nome')),
+        const SnackBar(content: Text('Por favor, insira um nome')),
       );
       return;
     }
     if (txtEmail.text.trim().isEmpty || !txtEmail.text.contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor, insira um email válido')),
+        const SnackBar(content: Text('Por favor, insira um email válido')),
       );
       return;
     }
     if (txtSenha.text.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('A senha deve ter pelo menos 6 caracteres')),
+        const SnackBar(content: Text('A senha deve ter pelo menos 6 caracteres')),
       );
       return;
     }
@@ -35,27 +34,35 @@ class RegistroPage extends StatelessWidget {
         data: {'display_name': txtNome.text.trim()},
       );
 
-      if (response.user != null) {
-        if (response.user!.identities!.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Este email já está registrado')),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Usuário cadastrado')),
-          );
-          await Future.delayed(Duration(milliseconds: 500));
-          Navigator.pushReplacementNamed(context, '/login');
+      if (context.mounted) {
+        if (response.user != null) {
+          if (response.user!.identities!.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Este email já está registrado')),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Usuário cadastrado')),
+            );
+            await Future.delayed(const Duration(milliseconds: 500));
+            if (context.mounted) {
+              Navigator.pushReplacementNamed(context, '/login');
+            }
+          }
         }
       }
     } on AuthException catch (ex) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ex.message)),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ex.message)),
+        );
+      }
     } catch (ex) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro inesperado: $ex')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro inesperado: $ex')),
+        );
+      }
     }
   }
 

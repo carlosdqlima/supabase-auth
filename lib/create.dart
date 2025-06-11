@@ -13,25 +13,46 @@ class CreatePage extends StatefulWidget {
 
 class _CreatePageState extends State<CreatePage> {
   var txtTask = TextEditingController();
-  String priority = "Média";
-
-  void create(BuildContext context) {
+  String priority = "Média";  void create(BuildContext context) async {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Usuário não autenticado')),
+        const SnackBar(content: Text('Usuário não autenticado')),
       );
       return;
     }
 
-    FirebaseFirestore.instance.collection('tasks').add({
-      "title": txtTask.text,
-      "completed": false,
-      "uid": user.id,
-      "priority": priority,
-    });
+    if (txtTask.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, insira uma tarefa')),
+      );
+      return;
+    }
 
-    Navigator.pop(context);
+    try {
+      await FirebaseFirestore.instance.collection('tasks').add({
+        "title": txtTask.text.trim(),
+        "completed": false,
+        "userId": user.id,
+        "priority": priority,
+        "name": user.userMetadata?['display_name'] ?? user.email?.split('@')[0] ?? 'Usuário',
+        "createdAt": FieldValue.serverTimestamp(),
+        "updatedAt": FieldValue.serverTimestamp(),
+      });
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tarefa criada com sucesso!')),
+        );
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao criar tarefa: $e')),
+        );
+      }
+    }
   }
 
   @override

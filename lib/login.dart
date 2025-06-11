@@ -6,22 +6,27 @@ class LoginPage extends StatelessWidget {
   final txtSenha = TextEditingController();
 
   LoginPage({super.key});
-
   void login(BuildContext context) async {
     try {
       await Supabase.instance.client.auth.signInWithPassword(
         email: txtEmail.text.trim(),
         password: txtSenha.text,
       );
-      Navigator.pushReplacementNamed(context, "/lista");
+      if (context.mounted) {
+        Navigator.pushReplacementNamed(context, "/lista");
+      }
     } on AuthException catch (ex) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ex.message)),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(ex.message)),
+        );
+      }
     } catch (ex) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erro inesperado: $ex')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro inesperado: $ex')),
+        );
+      }
     }
   }
 

@@ -19,20 +19,21 @@ class ListaPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Tasks"),
-        actions: [
+        title: Text("Tasks"),        actions: [
           IconButton(
               onPressed: () async {
                 await Supabase.instance.client.auth.signOut();
-                Navigator.pushReplacementNamed(context, "/login");
+                if (context.mounted) {
+                  Navigator.pushReplacementNamed(context, "/login");
+                }
               },
-              icon: Icon(Icons.logout))
+              icon: const Icon(Icons.logout))
         ],
-      ),
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      ),      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: FirebaseFirestore.instance
               .collection("tasks")
-              .where('uid', isEqualTo: user.id)
+              .where('userId', isEqualTo: user.id)
+              .orderBy('createdAt', descending: true)
               .snapshots(),
           builder: (context, snapshot) {
             if (!snapshot.hasData) return Text("Carregando...");
@@ -42,15 +43,20 @@ class ListaPage extends StatelessWidget {
                 return Dismissible(
                   background: Container(color: Colors.red),
                   key: Key(doc.id),
-                  onDismissed: (_) => doc.reference.delete(),
-                  child: CheckboxListTile(
+                  onDismissed: (_) => doc.reference.delete(),                  child: CheckboxListTile(
                     value: doc['completed'],
                     onChanged: (value) => doc.reference.update({
                       "completed": value,
-                      "updateDate": DateTime.now()
+                      "updatedAt": FieldValue.serverTimestamp()
                     }),
                     title: Text(doc['title']),
-                    subtitle: Text("Prioridade: ${doc['priority'] ?? 'Não definida'}"),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Prioridade: ${doc['priority'] ?? 'Não definida'}"),
+                        if (doc['name'] != null) Text("Criado por: ${doc['name']}"),
+                      ],
+                    ),
                   ),
                 );
               }).toList(),
